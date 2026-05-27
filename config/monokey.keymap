@@ -31,6 +31,12 @@
             timeout-ms = <50>;
         };
 
+        gesture {
+            bindings = <&mo 7>;
+            key-positions = <16 17>;
+            timeout-ms = <50>;
+        };
+
         pair {
             bindings = <&bt BT_SEL 5>;
             key-positions = <0 10 20>;
@@ -113,6 +119,7 @@
             >;
         };
 
+        /* GESTURE layer (id=7): hold J+K and flick the trackball. */
         layer_7 {
             bindings = <
 &none  &none  &none  &none  &none    &none  &none  &none  &none  &none
