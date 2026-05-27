@@ -58,7 +58,8 @@
         timeout-ms = <180>;
         cooldown-ms = <220>;
         tap-ms = <30>;
-        bindings = <&kp LC(UP)>, <&kp LC(DOWN)>, <&kp LC(LEFT)>, <&kp LC(RIGHT)>;
+        layer-id = <13>;
+        positions = <0 1 2 3>;
     };
 
     trackball_listener {
@@ -79,7 +80,7 @@
         };
 
         gesture_layer {
-            layers = <7>;
+            layers = <13>;
             input-processors = <&trackball_gestures>;
         };
 

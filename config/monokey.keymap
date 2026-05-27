@@ -32,8 +32,8 @@
         };
 
         gesture {
-            bindings = <&mo 7>;
-            key-positions = <16 17>;
+            bindings = <&mo 13>;
+            key-positions = <7 8>;
             timeout-ms = <50>;
         };
 
@@ -119,7 +119,6 @@
             >;
         };
 
-        /* GESTURE layer (id=7): hold J+K and flick the trackball. */
         layer_7 {
             bindings = <
 &none  &none  &none  &none  &none    &none  &none  &none  &none  &none
@@ -176,6 +175,16 @@
 &none  &none  &none  &none  &none    &none  &none  &mkp MB1  &mkp MB2  &mkp MB3
 &none  &none  &none  &none  &none    &none  &none  &none  &none  &none
 &none  &none  &none  &none  &none  &none    &none  &none  &none  &tog 12
+            >;
+        };
+
+        /* GESTURE layer (id=13): positions 0-3 map to up, down, left, right. */
+        gesture_layer {
+            bindings = <
+&kp LC(UP)  &kp LC(DOWN)  &kp LC(LEFT)  &kp LC(RIGHT)  &none    &none  &none  &none  &none  &none
+&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
+&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
+&none  &none  &none  &none  &none  &none    &none  &none  &none  &none
             >;
         };
 
