@@ -11,11 +11,11 @@ manifest:
   projects:
     - name: zmk
       remote: pite1222
-      revision: release/conductor-0.5.0
+      revision: feat/ble-profile-names
       import: app/west.yml
     - name: zmk-studio-messages
       remote: pite1222
-      revision: feat/pointing
+      revision: feat/ble-profile-names
       path: modules/msgs/zmk-studio-messages
     - name: zmk-pmw3610-driver
       remote: badjeff
