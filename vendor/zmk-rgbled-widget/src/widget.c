@@ -115,6 +115,8 @@ static bool initialized = false;
 // track current color for persistent indicators (layer color)
 uint8_t led_current_color = 0;
 
+static bool led_base_color_dirty = false;
+
 // flag to track if critical battery steady light is active
 static bool critical_steady_active = false;
 
@@ -203,8 +205,8 @@ static int led_output_listener_cb(const zmk_event_t *eh) {
 }
 
 // debouncing to ignore all but last connectivity event, to prevent repeat blinks
-static struct k_work_delayable indicate_connectivity_work;
 static void indicate_connectivity_cb(struct k_work *work) { indicate_connectivity_internal(); }
+K_WORK_DELAYABLE_DEFINE(indicate_connectivity_work, indicate_connectivity_cb);
 void indicate_connectivity() { k_work_reschedule(&indicate_connectivity_work, K_MSEC(16)); }
 
 ZMK_LISTENER(led_output_listener, led_output_listener_cb);
@@ -344,8 +346,9 @@ void update_layer_color(void) {
 
     uint8_t index = zmk_keymap_highest_layer_active();
 
-    if (led_layer_color != layer_color_idx[index]) {
+    if (led_base_color_dirty || led_layer_color != layer_color_idx[index]) {
         led_layer_color = layer_color_idx[index];
+        led_base_color_dirty = false;
         struct blink_item color = {.color = led_layer_color};
         LOG_INF("Setting layer color to %s for layer %d", color_names[led_layer_color], index);
         k_msgq_put(&led_msgq, &color, K_NO_WAIT);
@@ -478,8 +481,10 @@ void update_profile_color(bool force) {
         period = 0;
     }
 
-    if (force || led_layer_color != profile_color_idx[index] || profile_blink_period != period) {
+    if (force || led_base_color_dirty || led_layer_color != profile_color_idx[index] ||
+        profile_blink_period != period) {
         led_layer_color = profile_color_idx[index];
+        led_base_color_dirty = false;
         profile_blink_period = period;
         profile_blink_on = true;
         struct blink_item color = {.color = led_layer_color};
@@ -504,8 +509,9 @@ void update_peripheral_layer_color(uint8_t layer) {
         layer = ARRAY_SIZE(layer_color_idx) - 1;
     }
 
-    if (led_layer_color != layer_color_idx[layer]) {
+    if (led_base_color_dirty || led_layer_color != layer_color_idx[layer]) {
         led_layer_color = layer_color_idx[layer];
+        led_base_color_dirty = false;
         struct blink_item color = {.color = led_layer_color};
         LOG_INF("Setting peripheral layer color to %s for layer %d", color_names[led_layer_color],
                 layer);
@@ -566,7 +572,8 @@ void indicate_layer(void) {
 #endif // !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 
 #if SHOW_LAYER_CHANGE
-static struct k_work_delayable layer_indicate_work;
+static void indicate_layer_cb(struct k_work *work) { indicate_layer(); }
+K_WORK_DELAYABLE_DEFINE(layer_indicate_work, indicate_layer_cb);
 
 static int led_layer_listener_cb(const zmk_event_t *eh) {
     // ignore if not initialized yet or layer off events
@@ -575,8 +582,6 @@ static int led_layer_listener_cb(const zmk_event_t *eh) {
     }
     return 0;
 }
-
-static void indicate_layer_cb(struct k_work *work) { indicate_layer(); }
 
 ZMK_LISTENER(led_layer_listener, led_layer_listener_cb);
 ZMK_SUBSCRIPTION(led_layer_listener, zmk_layer_state_changed);
@@ -603,12 +608,6 @@ extern void led_process_thread(void *d0, void *d1, void *d2) {
     ARG_UNUSED(d0);
     ARG_UNUSED(d1);
     ARG_UNUSED(d2);
-
-    k_work_init_delayable(&indicate_connectivity_work, indicate_connectivity_cb);
-
-#if SHOW_LAYER_CHANGE
-    k_work_init_delayable(&layer_indicate_work, indicate_layer_cb);
-#endif
 
     while (true) {
         // wait until a blink item is received and process it
@@ -674,7 +673,23 @@ extern void led_process_thread(void *d0, void *d1, void *d2) {
 // define led_process_thread with stack size 1024, start running it 100 ms after
 // boot
 K_THREAD_DEFINE(led_process_tid, 1024, led_process_thread, NULL, NULL, NULL,
-                K_LOWEST_APPLICATION_THREAD_PRIO, 0, 100);
+                K_LOWEST_APPLICATION_THREAD_PRIO, 0,
+                CONFIG_RGBLED_WIDGET_PROCESS_THREAD_START_DELAY_MS);
+
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_EARLY_BOOT_INDICATION)
+static int rgbled_widget_early_boot_init(void) {
+#if IS_ENABLED(CONFIG_CHARGE_INDICATOR)
+    if (zmk_charge_indicator_is_charging()) {
+        return 0;
+    }
+#endif
+    set_rgb_leds(CONFIG_RGBLED_WIDGET_EARLY_BOOT_COLOR, 0);
+    led_base_color_dirty = true;
+    return 0;
+}
+
+SYS_INIT(rgbled_widget_early_boot_init, APPLICATION, 71);
+#endif
 
 extern void led_init_thread(void *d0, void *d1, void *d2) {
     ARG_UNUSED(d0);
@@ -691,9 +706,11 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
     k_sleep(K_MSEC(CONFIG_RGBLED_WIDGET_BATTERY_BLINK_MS + CONFIG_RGBLED_WIDGET_INTERVAL_MS));
 #endif // IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING) && IS_ENABLED(CONFIG_RGBLED_WIDGET_BOOT_BATTERY_INDICATION)
 
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_BOOT_CONNECTIVITY_INDICATION)
     // check and indicate current profile or peripheral connectivity status
     LOG_INF("Indicating initial connectivity status");
     indicate_connectivity();
+#endif
 
 #if SHOW_LAYER_COLORS
     LOG_INF("Setting initial layer color");
@@ -720,4 +737,5 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
 
 // run init thread on boot for initial battery+output checks
 K_THREAD_DEFINE(led_init_tid, 1024, led_init_thread, NULL, NULL, NULL,
-                K_LOWEST_APPLICATION_THREAD_PRIO, 0, 200);
+                K_LOWEST_APPLICATION_THREAD_PRIO, 0,
+                CONFIG_RGBLED_WIDGET_INIT_THREAD_START_DELAY_MS);

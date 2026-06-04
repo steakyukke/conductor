@@ -12,6 +12,24 @@ config RGBLED_WIDGET_INTERVAL_MS
     int "Minimum wait duration between two blinks in ms"
     default 500
 
+config RGBLED_WIDGET_PROCESS_THREAD_START_DELAY_MS
+    int "Delay before starting the LED process thread in ms"
+    default 100
+
+config RGBLED_WIDGET_INIT_THREAD_START_DELAY_MS
+    int "Delay before starting the LED startup indication thread in ms"
+    default 200
+
+config RGBLED_WIDGET_EARLY_BOOT_INDICATION
+    bool "Turn on the LED early during application startup"
+    default n
+
+config RGBLED_WIDGET_EARLY_BOOT_COLOR
+    int "Color for the early boot LED indication"
+    range 0 7
+    default 7
+    depends on RGBLED_WIDGET_EARLY_BOOT_INDICATION
+
 # Battery level settings
 
 choice RGBLED_WIDGET_BATTERY_SHOW
@@ -81,6 +99,10 @@ config RGBLED_WIDGET_BATTERY_COLOR_MISSING
 config RGBLED_WIDGET_CONN_BLINK_MS
     int "Duration of BLE connection status blink in ms"
     default RGBLED_WIDGET_OUTPUT_BLINK_MS
+
+config RGBLED_WIDGET_BOOT_CONNECTIVITY_INDICATION
+    bool "Show connectivity indicator during LED widget startup"
+    default y
 
 config RGBLED_WIDGET_CONN_SHOW_USB
     bool "Show USB indicator instead of BLE status if it has priority"
