@@ -681,7 +681,7 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
     ARG_UNUSED(d1);
     ARG_UNUSED(d2);
 
-#if IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING)
+#if IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING) && IS_ENABLED(CONFIG_RGBLED_WIDGET_BOOT_BATTERY_INDICATION)
     // check and indicate battery level on thread start
     LOG_INF("Indicating initial battery status");
 
@@ -689,7 +689,7 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
 
     // wait until blink should be displayed for further checks
     k_sleep(K_MSEC(CONFIG_RGBLED_WIDGET_BATTERY_BLINK_MS + CONFIG_RGBLED_WIDGET_INTERVAL_MS));
-#endif // IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING)
+#endif // IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING) && IS_ENABLED(CONFIG_RGBLED_WIDGET_BOOT_BATTERY_INDICATION)
 
     // check and indicate current profile or peripheral connectivity status
     LOG_INF("Indicating initial connectivity status");

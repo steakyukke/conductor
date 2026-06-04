@@ -36,6 +36,10 @@ config RGBLED_WIDGET_BATTERY_BLINK_MS
     int "Duration of battery level blink in ms"
     default 2000
 
+config RGBLED_WIDGET_BOOT_BATTERY_INDICATION
+    bool "Show battery indicator during LED widget startup"
+    default y
+
 config RGBLED_WIDGET_BATTERY_LEVEL_HIGH
     int "High battery level percentage"
     default 80
