@@ -30,6 +30,28 @@ config RGBLED_WIDGET_EARLY_BOOT_COLOR
     default 7
     depends on RGBLED_WIDGET_EARLY_BOOT_INDICATION
 
+config RGBLED_WIDGET_BLE_MILESTONE_INDICATION
+    bool "Show BLE startup milestones with short LED indications"
+    default n
+    depends on ZMK_BLE && (!ZMK_SPLIT || ZMK_SPLIT_ROLE_CENTRAL)
+
+config RGBLED_WIDGET_BLE_MILESTONE_ADV_COLOR
+    int "Color for BLE advertising-start milestone"
+    range 0 7
+    default 4
+    depends on RGBLED_WIDGET_BLE_MILESTONE_INDICATION
+
+config RGBLED_WIDGET_BLE_MILESTONE_CONNECTED_COLOR
+    int "Color for BLE host-connected milestone"
+    range 0 7
+    default 2
+    depends on RGBLED_WIDGET_BLE_MILESTONE_INDICATION
+
+config RGBLED_WIDGET_BLE_MILESTONE_DURATION_MS
+    int "Duration for BLE milestone LED indications in ms"
+    default 500
+    depends on RGBLED_WIDGET_BLE_MILESTONE_INDICATION
+
 # Battery level settings
 
 choice RGBLED_WIDGET_BATTERY_SHOW

@@ -9,6 +9,10 @@
 #include <zmk/ble.h>
 #include <zmk/endpoints.h>
 #include <zmk/events/battery_state_changed.h>
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_BLE_MILESTONE_INDICATION)
+#include <zmk/events/ble_advertising_state_changed.h>
+#include <zmk/events/ble_connection_state_changed.h>
+#endif
 #include <zmk/events/ble_active_profile_changed.h>
 #include <zmk/events/endpoint_changed.h>
 #include <zmk/events/layer_state_changed.h>
@@ -145,6 +149,43 @@ K_MSGQ_DEFINE(led_msgq, sizeof(struct blink_item), 16, 1);
 
 #if SHOW_PROFILE_COLORS
 void update_profile_color(bool force);
+#endif
+
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_BLE_MILESTONE_INDICATION)
+void zmk_rgbled_widget_indicate_ble_milestone(uint8_t color) {
+    if (IS_CHARGING()) {
+        return;
+    }
+
+    struct blink_item blink = {
+        .color = color,
+        .duration_ms = CONFIG_RGBLED_WIDGET_BLE_MILESTONE_DURATION_MS,
+    };
+    k_msgq_put(&led_msgq, &blink, K_NO_WAIT);
+}
+
+static int led_ble_milestone_listener_cb(const zmk_event_t *eh) {
+    struct zmk_ble_advertising_state_changed *ev = as_zmk_ble_advertising_state_changed(eh);
+    if (ev != NULL && ev->state != 0) {
+        LOG_INF("BLE advertising milestone, blinking %s",
+                color_names[CONFIG_RGBLED_WIDGET_BLE_MILESTONE_ADV_COLOR]);
+        zmk_rgbled_widget_indicate_ble_milestone(
+            CONFIG_RGBLED_WIDGET_BLE_MILESTONE_ADV_COLOR);
+    }
+
+    struct zmk_ble_connection_state_changed *conn_ev = as_zmk_ble_connection_state_changed(eh);
+    if (conn_ev != NULL && conn_ev->connected) {
+        LOG_INF("BLE connected milestone, blinking %s",
+                color_names[CONFIG_RGBLED_WIDGET_BLE_MILESTONE_CONNECTED_COLOR]);
+        zmk_rgbled_widget_indicate_ble_milestone(
+            CONFIG_RGBLED_WIDGET_BLE_MILESTONE_CONNECTED_COLOR);
+    }
+    return 0;
+}
+
+ZMK_LISTENER(led_ble_milestone_listener, led_ble_milestone_listener_cb);
+ZMK_SUBSCRIPTION(led_ble_milestone_listener, zmk_ble_advertising_state_changed);
+ZMK_SUBSCRIPTION(led_ble_milestone_listener, zmk_ble_connection_state_changed);
 #endif
 
 static void indicate_connectivity_internal(void) {

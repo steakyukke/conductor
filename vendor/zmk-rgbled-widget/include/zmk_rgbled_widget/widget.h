@@ -26,6 +26,10 @@ void indicate_battery(void);
 void indicate_connectivity(void);
 #endif
 
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_BLE_MILESTONE_INDICATION)
+void zmk_rgbled_widget_indicate_ble_milestone(uint8_t color);
+#endif
+
 #if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 void indicate_layer(void);
 #endif
