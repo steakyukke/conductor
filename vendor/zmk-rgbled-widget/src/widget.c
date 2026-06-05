@@ -174,7 +174,9 @@ static int led_ble_milestone_listener_cb(const zmk_event_t *eh) {
     }
 
     struct zmk_ble_connection_state_changed *conn_ev = as_zmk_ble_connection_state_changed(eh);
-    if (conn_ev != NULL && conn_ev->connected) {
+    if (conn_ev != NULL && conn_ev->connected &&
+        (conn_ev->profile_index == zmk_ble_active_profile_index() ||
+         (conn_ev->profile_index < 0 && zmk_ble_active_profile_is_open()))) {
         LOG_INF("BLE connected milestone, blinking %s",
                 color_names[CONFIG_RGBLED_WIDGET_BLE_MILESTONE_CONNECTED_COLOR]);
         zmk_rgbled_widget_indicate_ble_milestone(
