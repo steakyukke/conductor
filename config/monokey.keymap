@@ -46,7 +46,8 @@
         boot {
             bindings = <&bootloader>;
             key-positions = <8 24 4>;
-            timeout-ms = <50>;
+            timeout-ms = <150>;
+            require-prior-idle-ms = <250>;
         };
 
     };
