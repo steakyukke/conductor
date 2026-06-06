@@ -13,12 +13,15 @@
     flavor = "tap-preferred";
     tapping-term-ms = <150>;
     quick-tap-ms = <250>;
+    hold-while-undecided;
+    retro-tap;
 };
 
 &lt {
-    tapping-term-ms = <150>;
-    quick-tap-ms = <250>;
     flavor = "tap-preferred";
+    tapping-term-ms = <220>;
+    quick-tap-ms = <300>;
+    retro-tap;
 };
 
 / {
