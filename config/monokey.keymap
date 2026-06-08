@@ -126,9 +126,21 @@
             timeout-ms = <50>;
         };
 
+        /* Mac: I+O でジェスチャーレイヤー(13)へ。mac_base(0) のときだけ発火。
+         * ジェスチャーは OS で挙動が違い共有できないため Mac/Win を別レイヤーに分離。 */
         gesture {
             bindings = <&mo 13>;
             key-positions = <7 8>;
+            layers = <0>;
+            timeout-ms = <50>;
+        };
+
+        /* Win: I+O で Win 用ジェスチャーレイヤー(14)へ。win_base(1) のときだけ発火。
+         * Mac の gesture と同じ I+O だが、最上位アクティブ層が 0/1 で自動振り分け。 */
+        win_gesture {
+            bindings = <&mo 14>;
+            key-positions = <7 8>;
+            layers = <1>;
             timeout-ms = <50>;
         };
 
@@ -299,7 +311,9 @@
             >;
         };
 
-        /* GESTURE layer (id=13): I/J/L/COMMA map to up/left/right/down gestures. */
+        /* GESTURE layer (id=13・Mac用): フリック 上/左/右/下 → LC(↑/←/→/↓)。
+         * mac_base から combo I+O(layers=<0>) で入る。overlay の
+         * trackball_gestures(layer-id=13) がこの層の binding を発火させる。 */
 
         gesture_layer {
             bindings = <
@@ -307,6 +321,24 @@
 &none  &none  &none  &none  &none                &none  &kp LC(LEFT)  &none         &kp LC(RIGHT)  &none
 &none  &none  &none  &none  &none                &none  &none         &kp LC(DOWN)  &none          &none
 &none  &none  &none  &none  &none  &none  &none  &none                              &none          &none
+            >;
+        };
+
+        /* WIN_GESTURE layer (id=14・Windows用): gesture_layer の Win 版。
+         * win_base から combo I+O(layers=<1>) で入る。overlay の
+         * trackball_gestures_win(layer-id=14) がこの層の binding を発火させる。
+         *   フリック上 (I/7)    → LG(TAB)        : タスクビュー（開いているアプリ一覧）
+         *   フリック左 (J/16)   → LG(LC(LEFT))   : 左の仮想デスクトップへ
+         *   フリック右 (L/18)   → LG(LC(RIGHT))  : 右の仮想デスクトップへ
+         *   フリック下 (,/27)   → &none          : Win に好適なショートカットなし
+         * ※ 仮想デスクトップ切替は Win+Ctrl+矢印（Ctrl 単独では単語移動になる）。 */
+
+        win_gesture_layer {
+            bindings = <
+&none  &none  &none  &none  &none                &none  &none              &kp LG(TAB)  &none              &none
+&none  &none  &none  &none  &none                &none  &kp LG(LC(LEFT))   &none        &kp LG(LC(RIGHT))  &none
+&none  &none  &none  &none  &none                &none  &none              &none        &none              &none
+&none  &none  &none  &none  &none  &none  &none  &none                                  &none              &none
             >;
         };
     };

@@ -56,6 +56,9 @@
         track-remainders;
     };
 
+    /* Mac 用ジェスチャー: フリック方向 → gesture_layer(13) の binding を発火。
+     * layer-id はフリックで叩く位置の binding を引くレイヤー（その層がアクティブで
+     * ある必要はない。どのプロセッサを走らせるかは下の listener の layers で決まる）。 */
     trackball_gestures: trackball_gestures {
         compatible = "zmk,input-processor-gestures";
         #input-processor-cells = <0>;
@@ -67,6 +70,23 @@
         cooldown-ms = <220>;
         tap-ms = <30>;
         layer-id = <13>;
+        positions = <7 27 16 18>; /* up=I, down=COMMA, left=J, right=L */
+    };
+
+    /* Win 用ジェスチャー: trackball_gestures の Win 版。layer-id=14 で
+     * win_gesture_layer(14) の binding（LG(TAB)/LG(LC(LEFT/RIGHT))）を発火。
+     * パラメータ（threshold 等）と positions は Mac 版と同一。 */
+    trackball_gestures_win: trackball_gestures_win {
+        compatible = "zmk,input-processor-gestures";
+        #input-processor-cells = <0>;
+        type = <INPUT_EV_REL>;
+        x-code = <INPUT_REL_X>;
+        y-code = <INPUT_REL_Y>;
+        threshold = <120>;
+        timeout-ms = <180>;
+        cooldown-ms = <220>;
+        tap-ms = <30>;
+        layer-id = <14>;
         positions = <7 27 16 18>; /* up=I, down=COMMA, left=J, right=L */
     };
 
@@ -89,9 +109,16 @@
             input-processors = <&zip_xy_scaler 1 2 &zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
         };
 
+        /* Mac ジェスチャー: レイヤー13 アクティブ時にフリックを方向キーへ。 */
         gesture_layer {
             layers = <13>;
             input-processors = <&zip_xy_scaler 1 2 &trackball_gestures>;
+        };
+
+        /* Win ジェスチャー: レイヤー14 アクティブ時、Win 版プロセッサで処理。 */
+        gesture_win_layer {
+            layers = <14>;
+            input-processors = <&zip_xy_scaler 1 2 &trackball_gestures_win>;
         };
 
         /* 精密モード: レイヤー12 (PRECISION) がアクティブ時、
