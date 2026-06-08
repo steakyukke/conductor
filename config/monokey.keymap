@@ -38,6 +38,65 @@
             retro-tap;
             bindings = <&kp>, <&kp>;
         };
+
+        /* 接続切替マクロ用: レイヤーを ON 固定 / OFF 固定するトグル behavior。
+         * conductor フォーク(pite1222/zmk@release/conductor-0.5.4)で
+         * behavior-toggle-layer の toggle-mode=on/off 対応を確認済み。 */
+        tog_on: tog_on {
+            compatible = "zmk,behavior-toggle-layer";
+            #binding-cells = <1>;
+            display-name = "Toggle Layer On";
+            toggle-mode = "on";
+        };
+        tog_off: tog_off {
+            compatible = "zmk,behavior-toggle-layer";
+            #binding-cells = <1>;
+            display-name = "Toggle Layer Off";
+            toggle-mode = "off";
+        };
+    };
+
+    /* 接続先プロファイル切替 ＋ OSベース自動切替マクロ。
+     * BT_SEL 1・2 = Win（win_base=1 を ON）/ それ以外(0・3・4) = Mac（win_base を OFF）。
+     * Mac系も tog_off を含めるのは Win→Mac で win_base を確実に外すため。
+     * 切替キーは単独で押すこと（実行中 約0.2〜0.7秒は他キーと競合しうる）。
+     * setting レイヤー(idx6)の BT_SEL 位置に割当てる。 */
+    macros {
+        to_mac0: to_mac0 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings = <&tog_off 1 &macro_wait_time 200 &bt BT_SEL 0>;
+        };
+        to_win1: to_win1 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings = <&tog_off 1 &macro_wait_time 200 &bt BT_SEL 1 &macro_wait_time 500 &tog_on 1>;
+        };
+        to_win2: to_win2 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings = <&tog_off 1 &macro_wait_time 200 &bt BT_SEL 2 &macro_wait_time 500 &tog_on 1>;
+        };
+        to_mac3: to_mac3 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings = <&tog_off 1 &macro_wait_time 200 &bt BT_SEL 3>;
+        };
+        to_mac4: to_mac4 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            wait-ms = <30>;
+            tap-ms = <30>;
+            bindings = <&tog_off 1 &macro_wait_time 200 &bt BT_SEL 4>;
+        };
     };
 
     combos {
@@ -72,12 +131,34 @@
     keymap {
         compatible = "zmk,keymap";
 
-        default_layer {
+        /* idx 0: Mac ベース（起動時の既定レイヤー）。
+         * 現行 default から &lt 番号のみ更新（symbol 1→2 / number 2→3 / move 3→4）。 */
+        mac_base {
             bindings = <
 &kp Q  &kp W  &kp E  &kp R  &kp T    &kp Y  &kp U  &kp I  &kp O  &kp P
 &kp A  &kp S  &kp D  &kp F  &kp G    &kp H  &kp J  &kp K  &kp L  &kp MINUS
 &mt_shift LSHIFT Z  &kp X  &kp C  &kp V  &kp B    &kp N  &kp M  &kp COMMA  &kp DOT  &mt_shift RSHIFT FSLH
-&kp TAB  &kp LCTRL  &kp LALT  &mt LGUI LANG2  &lt 1 SPACE  &lt 2 BSPC    &lt 3 ENTER  &mt RGUI LANG1  &kp C_VOL_DN  &kp C_VOL_UP
+&kp TAB  &kp LCTRL  &kp LALT  &mt LGUI LANG2  &lt 2 SPACE  &lt 3 BSPC    &lt 4 ENTER  &mt RGUI LANG1  &kp C_VOL_DN  &kp C_VOL_UP
+            >;
+
+            sensor-bindings = <&inc_dec_kp PG_UP PG_DN>;
+        };
+
+        /* idx 1: Windows ベース（to_win1/to_win2 マクロでトグル ON）。
+         * mac_base の差分版。&trans を一切持たない「フル定義」なので、
+         * トグル ON で mac_base を完全に覆う（透けて Cmd が出るのを防ぐ）。
+         * mac_base との差分は4箇所:
+         *   親指内左  &mt LGUI→LCTRL  / 親指内右 &mt RGUI→RCTRL（コピー等を Win=Ctrl に）
+         *   ENTER     &lt 4→7（mac_move→win_move）
+         *   左下       &kp LCTRL→LGUI（内親指が Ctrl化したので Win キーを確保）
+         * 🟡 IME: Win は LANG1/LANG2 が既定で IME に渡らない環境が多い。
+         *    効かなければ INT5(無変換)/INT4(変換) or GRAVE(半角/全角) を実機で要調整。 */
+        win_base {
+            bindings = <
+&kp Q  &kp W  &kp E  &kp R  &kp T    &kp Y  &kp U  &kp I  &kp O  &kp P
+&kp A  &kp S  &kp D  &kp F  &kp G    &kp H  &kp J  &kp K  &kp L  &kp MINUS
+&mt_shift LSHIFT Z  &kp X  &kp C  &kp V  &kp B    &kp N  &kp M  &kp COMMA  &kp DOT  &mt_shift RSHIFT FSLH
+&kp TAB  &kp LGUI  &kp LALT  &mt LCTRL LANG2  &lt 2 SPACE  &lt 3 BSPC    &lt 7 ENTER  &mt RCTRL LANG1  &kp C_VOL_DN  &kp C_VOL_UP
             >;
 
             sensor-bindings = <&inc_dec_kp PG_UP PG_DN>;
@@ -101,21 +182,14 @@
             >;
         };
 
-        move_layer {
+        /* idx 4: Mac 版 move（readline LC(A)/LC(E)・Cmd 行移動など現行どおり）。
+         * mac_base の &lt 4 ENTER で開く。 */
+        mac_move {
             bindings = <
 &trans  &trans  &trans  &trans  &trans    &kp LC(UP)  &kp LC(LEFT)  &kp UP  &kp LC(RIGHT)  &kp LC(DOWN)
 &trans  &trans  &trans  &trans  &trans    &kp LC(A)  &kp LEFT  &kp DOWN  &kp RIGHT  &kp LC(E)
 &trans  &trans  &trans  &trans  &trans    &kp C_PREV  &kp LG(LEFT)  &none  &kp LG(RIGHT)  &kp C_NEXT
 &none  &none  &none  &none  &none  &none    &none  &none  &kp C_BRI_DN  &kp C_BRI_UP
-            >;
-        };
-
-        mouse_layer {
-            bindings = <
-&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none    &none  &none  &mkp MB1  &mkp MB2  &mkp MB3
-&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none  &none    &none  &none  &none  &none
             >;
         };
 
@@ -130,19 +204,21 @@
 
         setting_layer {
             bindings = <
-&none  &none  &none  &none  &none    &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4
+&none  &none  &none  &none  &none    &to_mac0  &to_win1  &to_win2  &to_mac3  &to_mac4
 &none  &none  &none  &none  &none    &none  &trans  &trans  &tog 12  &scrl_inv
 &none  &trans  &trans  &trans  &none    &none  &none  &none  &none  &none
 &none  &none  &none  &none  &none  &none    &none  &bootloader  &bt BT_CLR  &bt BT_CLR_ALL
             >;
         };
 
-        layer_7 {
+        /* idx 7: Windows 版 move（Home/End/PgUp 等の Win イディオム。実機で要調整）。
+         * win_base の &lt 7 ENTER で開く。mac_move と同枠の OS 別差し替え。 */
+        win_move {
             bindings = <
-&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none  &none    &none  &none  &none  &none
+&trans  &trans  &trans  &trans  &trans    &kp PG_UP  &kp LC(LEFT)  &kp UP  &kp LC(RIGHT)  &kp PG_DN
+&trans  &trans  &trans  &trans  &trans    &kp HOME  &kp LEFT  &kp DOWN  &kp RIGHT  &kp END
+&trans  &trans  &trans  &trans  &trans    &kp C_PREV  &kp HOME  &none  &kp END  &kp C_NEXT
+&none  &none  &none  &none  &none  &none    &none  &none  &kp C_BRI_DN  &kp C_BRI_UP
             >;
         };
 
@@ -164,10 +240,14 @@
             >;
         };
 
-        layer_10 {
+        /* idx 10: AML(automouse)。overlay の &zip_temp_layer 10 の飛び先。
+         * 旧 idx4 から移動。全コンテンツ層より上に置くことで、どのレイヤーに
+         * いても MB1-3 を押せる（上位レイヤーが MB 位置を覆う継承問題の解消）。
+         * MB 以外は &none（＝下位レイヤーは透けない・mouse 専用層）。 */
+        mouse_layer {
             bindings = <
 &none  &none  &none  &none  &none    &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
+&none  &none  &none  &none  &none    &none  &none  &mkp MB1  &mkp MB2  &mkp MB3
 &none  &none  &none  &none  &none    &none  &none  &none  &none  &none
 &none  &none  &none  &none  &none  &none    &none  &none  &none  &none
             >;
